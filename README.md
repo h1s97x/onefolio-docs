@@ -1,104 +1,84 @@
-# OneFolio 文档站（docs-site）
+# OneFolio 文档站
 
-VitePress 文档站，读者是**部署实施与行内运维**。当前与代码同仓维护，**可整体拆成独立仓库**（结构已就绪）。
+VitePress 部署与运维文档站，读者是**部署实施与行内运维**。本仓已从源码仓独立出来，是站点内容的**唯一来源**。
+（本仓内容会同步到公开的 GitHub 发布仓，**不要写入任何内部地址**：源码仓路径、
+制品库域名、项目/客户代号、内网地址。）
 
-- 独立 `package.json` 与依赖，不影响应用镜像构建（`.dockerignore` 已排除本目录）；
-- 只放「装、配、运维」，架构决策 / 审计报告等开发者文档留在仓库 `docs/`；
-- **站点内不硬编码任何内部地址**（仓库路径、制品库域名、项目代号一律用占位符）——
-  代码仓是私有的，本站要公网可见，两者边界不同。
+- 源码仓只保留 `docs/`（开发者文档：架构决策、审计报告等），不在本仓；
+- 本仓**不硬编码任何内部地址**（仓库路径、制品库域名、项目代号一律用占位符）——
+  源码仓私有、本站公网可见，两者边界不同；
+- 内容只放「装、配、运维」，每条结论都对应可执行命令或界面位置。
 
 ## 本地预览
 
 ```bash
-pnpm --dir docs-site install     # 首次：站点依赖与应用依赖相互独立
-
-pnpm docs:dev                    # http://localhost:5173
-pnpm docs:build                  # 产物：docs-site/.vitepress/dist
-pnpm docs:preview                # 预览构建产物
+pnpm install          # 首次
+pnpm dev              # http://localhost:5173
+pnpm build            # 产物：.vitepress/dist
+pnpm preview          # 预览构建产物
 ```
 
-## 配置项覆盖校验
+## 配置项覆盖校验（发版前的闸门）
 
 ```bash
-pnpm check:docs                     # 同仓模式：读 .env.example + docker-compose.yml
-pnpm export:config-surface          # 导出 release/config-surface.json（配置面工件）
+# 工件由源码仓发版时推送（artifacts/config-surface.json，随 tag 更新）
+pnpm check:config:surface
 
-# 工件模式（文档站独立成仓后使用）
-node docs-site/scripts/check-config-coverage.mjs --surface config-surface.json
+# 手工导出一份工件（无源码仓环境时）需在源码仓执行：
+#   node scripts/export-config-surface.mjs
 ```
 
-规则：配置来源里出现的**每个变量名**都必须出现在 `guide/configuration.md`。
+规则：工件里出现的**每个配置项名称**都必须能在 `guide/configuration.md` 找到说明。
 新增环境变量却漏写文档时校验失败——这类漏配在交付现场的表现是「客户按文档配完起不来」。
 
-两种模式共用同一份解析逻辑（`scripts/config-surface.mjs`），口径不会分叉；
-工件只含变量名与必填标记、**不含取值**，因此可以安全跨仓传递。
+工件只含变量名与必填标记、**不含取值**，因此可以安全跨仓传递；
+两侧各有一份等价的解析实现（源码仓 `scripts/lib/config-surface.mjs`、本仓
+`scripts/config-surface.mjs`），契约是工件的 JSON 结构（`schemaVersion`），不做源码同步。
 
-## 关联架构（已按此设计，待拆仓后生效）
+## 关联链路
 
 ```text
-源码仓（私有，本仓）
-  │  打 tag 时：导出 config-surface.json → 推送到文档仓 artifacts/
+源码仓（私有，不在本仓文档中给出地址）
+  │  打 tag：导出 config-surface.json → 推送到本仓 artifacts/
   ▼
-文档仓 · 内容源：cnb.cool/h1s97x/whccb/onefolio-docs（私有）
+本仓 · 内容源（私有，CNB）
   │  push → git-sync 单向同步
   ▼
-文档仓 · 发布源：github.com/h1s97x/onefolio-docs（公开）
+发布源（github.com/h1s97x/onefolio-docs，公开）
   │  Actions：校验配置项覆盖 → 构建 → 发布
   ▼
-GitHub Pages
+GitHub Pages → https://h1s97x.github.io/onefolio-docs/
 ```
 
-三个角色各自负责一件事，互不越界：
-
-| 角色 | 负责 | 不负责 |
-| --- | --- | --- |
-| 源码仓 | 导出并推送配置面工件（版本对齐的事实源） | 不构建、不发布站点 |
-| CNB 文档仓（内容源） | 唯一的内容编辑入口，提交即同步 | 不做发布前校验 |
-| GitHub 文档仓（发布源） | 校验配置项覆盖 + 构建 + 发布 Pages | 不编辑内容（只被消费） |
+| 角色           | 负责                                     | 不负责                 |
+| -------------- | ---------------------------------------- | ---------------------- |
+| 源码仓         | 导出并推送配置面工件（版本对齐的事实源） | 不构建、不发布站点     |
+| 本仓（内容源） | 唯一内容编辑入口，提交即同步             | 不做发布前校验         |
+| GitHub 发布仓  | 校验配置项覆盖 + 构建 + 发布 Pages       | 不编辑内容（只被消费） |
 
 校验闸放在发布源，是因为「源码仓暴露的配置项是否都有文档」只有在文档仓才检得全；
 放在发布前而不是源码仓，能保证**任何一次发布都经过这道闸**。
 
-## 拆出独立仓库
-
-```bash
-# 1) 从本仓切出文档站历史（保留提交记录）
-git subtree split --prefix=docs-site -b docs-site
-
-# 2) 推到 CNB 文档仓（内容源）
-git remote add docs https://cnb.cool/h1s97x/whccb/onefolio-docs.git
-git push docs docs-site:main
-```
-
-拆仓后按顺序完成四件事：
-
-| # | 事项 | 操作 |
-| --- | --- | --- |
-| 1 | CNB 文档仓启用同步 | 把本目录 `cnb.yml` 复制到该仓根目录 `.cnb.yml`（其中 `target_url` 即 GitHub 发布源地址） |
-| 2 | 建 GitHub 发布仓 | 建公开仓 `h1s97x/onefolio-docs`；`Settings → Pages → Source` 选 **GitHub Actions** |
-| 3 | GitHub 仓放 workflow | 本目录的 `.github/workflows/docs.yml` 拆仓后会自然落在正确位置；若手工建仓请一并复制 |
-| 4 | 确认凭据 | CNB 密钥仓 `h1s97x/secret-env` 的 `GITHUB_USERNAME` / `GITHUB_TOKEN` 需对该 GitHub 仓**可写**（源码仓的同步已在用同一份凭据） |
-
-然后：源码仓打 tag → 推送新的配置面工件 → GitHub Actions 重建发布。
-若工件推送环节失败（凭据/仓名不对），文档站会**沿用上一次的工件**继续发布，
-不会因此中断源码仓发版；此时可在源码仓手动执行
-`pnpm export:config-surface`，把 `release/config-surface.json` 放进
-GitHub 文档仓的 `artifacts/` 目录提交一次即可。
-
 ## 发布细节
 
-| 项 | 说明 |
-| --- | --- |
-| 站点地址 | `https://h1s97x.github.io/onefolio-docs/`（项目站点，位于 `/<repo>/` 子路径，workflow 已自动传 `--base`） |
-| 页面入口链接 | `DOCS_REPO_URL`（仓库入口）与 `DOCS_EDIT_LINK`（「编辑此页」前缀）由 workflow 注入。**两个平台的路径格式不同**（GitHub `/blob/main`、CNB `/-/blob/main`），所以前缀由环境给出、不在配置里猜平台 |
-| 自定义域名 | 绑定后把 workflow 里的 `--base=/.../` 改成 `--base=/`，并在仓内加 `CNAME` |
-| cleanUrls | **默认关闭**：GitHub Pages 不做无扩展名 URL 重写，开启会导致内页 404，因此链接统一带 `.html`。迁到 nginx / Netlify 等支持重写的平台时可设 `CLEAN_URLS=1` 打开（nginx 需 `try_files $uri $uri.html $uri/ =404;`） |
-| 404 | VitePress 会生成 `404.html`，GitHub Pages 直接可用 |
-| 域名确定后 | 在 `.vitepress/config.mts` 打开 `sitemap.hostname` |
+| 项         | 说明                                                                                                                                                                                                        |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 站点地址   | `https://h1s97x.github.io/onefolio-docs/`（项目站点，位于 `/<repo>/` 子路径，workflow 自动传 `--base`）                                                                                                     |
+| 入口链接   | `DOCS_REPO_URL`（仓库入口）、`DOCS_EDIT_LINK`（「编辑此页」前缀）由 workflow 注入。两个平台路径格式不同（GitHub `/blob/main`、CNB `/-/blob/main`），所以前缀由环境给出、不在配置里猜平台                    |
+| 自定义域名 | 绑定后把 workflow 的 `--base=/.../` 改成 `--base=/`，并在仓内加 `CNAME`                                                                                                                                     |
+| cleanUrls  | **默认关闭**：GitHub Pages 不做无扩展名 URL 重写，开启会导致内页 404，因此链接统一带 `.html`。迁到 nginx / Netlify 等支持重写的平台时可设 `CLEAN_URLS=1`（nginx 需 `try_files $uri $uri.html $uri/ =404;`） |
+| 404        | VitePress 会生成 `404.html`，GitHub Pages 直接可用                                                                                                                                                          |
+| 域名确定后 | 在 `.vitepress/config.mts` 打开 `sitemap.hostname`                                                                                                                                                          |
+
+## 同步注意
+
+- 内容只在**本仓**编辑；`git-sync` 是单向的（本仓 → GitHub 发布仓），不要在 GitHub 侧直接改内容。
+- 若本仓出现**重写历史**（rebase / amend / 强制推送），`git-sync` 会因非快进被拒而同步失败
+  （GitHub 侧仍是旧提交）。此时需在 GitHub 侧做一次强制更新或重建仓库，之后恢复正常。
 
 ## 写作约定
 
-1. **不要复制正文**：事实源是 `.env.example` / `docker-compose.yml` / 代码，本站只做汇总与解释。
+1. **不要复制正文**：事实源是源码仓的 `.env.example` / `docker-compose.yml` 与代码，本站只做汇总与解释。
 2. **危险操作必须用 `::: danger` 显式标注**（清卷重来、删表、轮换密钥导致会话失效等）。
 3. **每条结论尽量对应可执行命令或界面位置**（哪个页签、哪个文件、哪条命令）。
 4. **不写内部信息**：仓库路径、制品库域名、项目/客户代号、内网地址一律用占位符
