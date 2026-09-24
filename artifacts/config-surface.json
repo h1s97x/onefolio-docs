@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "product": "OneFolio",
-  "version": "v0.3.2",
-  "commit": "4387bea9deeae7aad71fc39f59734d365afe5082",
-  "generatedAt": "2026-09-24T03:13:26.765Z",
+  "version": "v0.3.3",
+  "commit": "15c3e69c4fed6ad8b3d5271f1b90981173f829c0",
+  "generatedAt": "2026-09-24T03:36:24.145Z",
   "sources": [
     ".env.example",
     "docker-compose.yml"
