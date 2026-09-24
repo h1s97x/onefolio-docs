@@ -4,8 +4,8 @@
 
 | 检查项     | 怎么看                                                                 | 异常信号                                 |
 | ---------- | ---------------------------------------------------------------------- | ---------------------------------------- |
-| 服务存活   | `curl -I http://<host>:5000/api/system/status -X HEAD`                 | 非 200                                   |
-| 数据库连通 | `curl http://<host>:5000/api/system/status`（匿名摘要里的 `database`） | `database` 不为 ok                       |
+| 服务存活   | `curl -I http://<host>:8000/api/system/status -X HEAD`                 | 非 200                                   |
+| 数据库连通 | `curl http://<host>:8000/api/system/status`（匿名摘要里的 `database`） | `database` 不为 ok                       |
 | 智能体可用 | 同上摘要中的 `agent`；或管理员的节点状态接口                           | 无节点承接 / 节点全部隔离                |
 | 磁盘       | `df -h`（重点看 `/data` 所在分区与容器卷）                             | 使用率 > 85%                             |
 | 任务失败   | 「数据中心」「任务」页按状态筛选                                       | 失败率 > 10%，或集中出现「智能体未配置」 |
@@ -16,7 +16,7 @@
 
 | 容器               | 作用                                    | 需开放端口                  |
 | ------------------ | --------------------------------------- | --------------------------- |
-| `onefolio`         | 应用（Next.js standalone，容器内 5000） | 是（`APP_PORT`，默认 5000） |
+| `onefolio`         | 应用（Next.js standalone，容器内 5000） | 是（`APP_PORT`，默认 8000） |
 | `onefolio-gateway` | nginx，把 `/rest/v1/*` 重写到 PostgREST | 否（compose 内网 8080）     |
 | `onefolio-rest`    | PostgREST，把 PostgreSQL 暴露成 REST    | 否（内网 3000）             |
 | `onefolio-db`      | PostgreSQL                              | 否（内网 5432）             |
@@ -71,7 +71,7 @@ WHERE batch_id = '<batchId>' AND status = 'processing' ORDER BY updated_at ASC L
 **第二步：手动打一次兜底 tick**（超管会话）：
 
 ```bash
-curl -X POST http://<host>:5000/api/system/batch-tick -H 'Cookie: <超管会话 Cookie>'
+curl -X POST http://<host>:8000/api/system/batch-tick -H 'Cookie: <超管会话 Cookie>'
 ```
 
 - 返回 `processed: 0` 说明没有 `pending` 任务可认领（可能已全部失败）→ 在批次页用「续跑」重试；

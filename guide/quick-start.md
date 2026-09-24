@@ -40,7 +40,7 @@
 ## 2. 架构
 
 ```text
-浏览器 ──> app(Next.js standalone, :5000) ──> gateway(nginx :8080)
+浏览器 ──> app(Next.js standalone, :8000) ──> gateway(nginx :8080)
                     │                              │  /rest/v1/* → /*
                     │                              ▼
                     │                          rest(PostgREST :3000)
@@ -49,7 +49,7 @@
                     └──> /data(持久卷)          db(PostgreSQL, 仅内网)
 ```
 
-数据库端口不对外暴露，只有 `app` 的 `5000` 需要开放给使用者。私有化环境通常只有 PostgreSQL，因此用「PostgreSQL + PostgREST + 路径重写网关」替代托管 Supabase，应用代码零改造。
+数据库端口不对外暴露，只需开放 `app` 的宿主端口（`APP_PORT`，默认 **8000**；容器内固定 5000）。若该端口被占用，`deploy.sh` 会自动改用空闲端口。私有化环境通常只有 PostgreSQL，因此用「PostgreSQL + PostgREST + 路径重写网关」替代托管 Supabase，应用代码零改造。
 
 ## 3. 部署步骤
 
@@ -57,6 +57,9 @@
 # 0) 校验完整性并解包
 sha256sum -c < onefolio-delivery-v1.2.3.sha256
 tar xzf onefolio-delivery-v1.2.3.tar.gz && cd ./
+
+# 0.5) 环境自检（离线包/信创机型建议先跑）：CPU/OS/Docker/资源/端口/包完整性/本地镜像，只读不改动系统
+bash scripts/preflight.sh
 
 # 1) 配置环境变量
 cp .env.example .env
@@ -66,11 +69,17 @@ vim .env                             # 填写 AUTH_SECRET / BOOTSTRAP_ADMIN_PASS
 # 2) 导入镜像（镜像仓库场景跳过，并把 .env 的 ONEFOLIO_IMAGE 改为仓库地址）
 bash scripts/load-image.sh
 
-# 3) 启动（会先校验建表脚本非空，然后拉起全套并等待应用健康）
+# 3) 启动（会先做镜像体检与建表脚本校验，然后拉起全套并等待应用健康）
 bash scripts/deploy.sh
 ```
 
 `deploy.sh` 最多等待 120 秒应用健康，成功后输出访问地址。
+
+::: tip 离线环境的两条硬约束
+
+1. 4 个服务都声明了 `pull_policy: never`：镜像不在本地就**立即失败**，不会悄悄去公网拉取并卡到超时；`deploy.sh` 启动前还会做一次镜像体检，缺失项与修复命令直接打印出来。
+2. `APP_PORT` 默认 **8000**（5000 易与服务器已有服务撞车）；若仍被占用，`deploy.sh` 会自动改用空闲端口启动。
+   :::
 
 ## 4. 首次启动做了什么
 
@@ -101,9 +110,9 @@ bash scripts/deploy.sh
 | 方式                                       | 初始账号 | 初始口令                                       |
 | ------------------------------------------ | -------- | ---------------------------------------------- |
 | 初始化时播种（默认）                       | `admin`  | `.env` 中的 `BOOTSTRAP_ADMIN_PASSWORD`         |
-| 部署后自助创建（`SKIP_BOOTSTRAP_ADMIN=1`） | 自行指定 | 在 `http://<部署主机>:5000/setup` 页面自行设置 |
+| 部署后自助创建（`SKIP_BOOTSTRAP_ADMIN=1`） | 自行指定 | 在 `http://<部署主机>:8000/setup` 页面自行设置 |
 
-访问地址：`http://<部署主机>:5000`。
+访问地址：`http://<部署主机>:8000`。
 
 首次登录后请立即在「个人资料 → 修改密码」修改。
 
@@ -111,10 +120,10 @@ bash scripts/deploy.sh
 
 ```bash
 # HEAD：只判存活
-curl -I http://<部署主机>:5000/api/system/status -X HEAD
+curl -I http://<部署主机>:8000/api/system/status -X HEAD
 
 # 匿名 GET：返回存活摘要 {status, database, agent}
-curl http://<部署主机>:5000/api/system/status
+curl http://<部署主机>:8000/api/system/status
 ```
 
 带登录态的 GET 才会返回详细统计，POST / PUT 一律需要管理员会话。

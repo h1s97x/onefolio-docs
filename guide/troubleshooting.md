@@ -2,6 +2,12 @@
 
 按「现象 → 原因 → 处理」组织。**先看日志**：`docker compose logs --tail=200 app` / `docker compose logs db | head -50`。
 
+排障前可以先跑一次交付包自带的诊断脚本（只读，输出 CPU/OS/Docker/资源/端口/包完整性/镜像/服务状态汇总，便于直接贴给维护方）：
+
+```bash
+bash scripts/diagnose.sh
+```
+
 ## 部署与启动
 
 | 现象                                           | 原因                                                                        | 处理                                                                                                            |

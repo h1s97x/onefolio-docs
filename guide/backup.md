@@ -100,7 +100,7 @@ docker compose start app
 
 ```bash
 # 1) 服务健康
-curl -I http://<host>:5000/api/system/status -X HEAD
+curl -I http://<host>:8000/api/system/status -X HEAD
 
 # 2) 业务数据抽样核对
 docker compose exec db psql -U postgres -d onefolio -c \

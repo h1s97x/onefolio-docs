@@ -58,7 +58,7 @@ docker compose start app
 docker compose ps
 
 # 探活
-curl -I http://<host>:5000/api/system/status -X HEAD
+curl -I http://<host>:8000/api/system/status -X HEAD
 
 # 应用日志（看有没有启动期报错）
 docker compose logs --tail=100 app
