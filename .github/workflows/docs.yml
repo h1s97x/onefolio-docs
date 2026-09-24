@@ -1,0 +1,87 @@
+# 文档站 GitHub 仓库（发布源）的 workflow
+#
+# ⚠️ 本文件当前**不生效**：GitHub 只读仓库根目录的 .github/workflows/，
+#    而本文件位于 docs-site/ 下。拆出独立文档仓后，它会自然落在该仓根目录，无需搬运。
+#
+# 触发来源有三条：
+#   1) 内容源（CNB 文档仓）推送后经 git-sync 落到本仓 main → 重建发布
+#   2) 源码仓打 tag 时推送新的 artifacts/config-surface.json → 重建发布（版本对齐）
+#   3) 手动 workflow_dispatch
+#
+# 发布前的最后一道闸：校验「源码仓暴露的每个配置项都在文档里」，缺一项就拒绝发布。
+# 这道闸放在这里而不是源码仓，是因为「配置项是否都有文档」只有在文档仓才检得全。
+
+name: Docs site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 版本以 package.json 的 packageManager（pnpm@9.0.0）为唯一来源：
+      # 这里**不要**再传 with.version，否则报 “Multiple versions of pnpm specified”
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 校验配置项覆盖
+        run: |
+          set -e
+          if [ ! -f artifacts/config-surface.json ]; then
+            echo "缺少 artifacts/config-surface.json。" >&2
+            echo "它由源码仓打 tag 时推送（见源码仓 .cnb.yml 的 push config surface to docs repo 阶段）。" >&2
+            exit 1
+          fi
+          node scripts/check-config-coverage.mjs --surface artifacts/config-surface.json
+
+      - name: 构建
+        env:
+          # 仓库入口与「编辑此页」入口；不注入则不渲染
+          DOCS_REPO_URL: https://github.com/${{ github.repository }}
+          DOCS_EDIT_LINK: https://github.com/${{ github.repository }}/blob/main
+        run: |
+          set -e
+          # GitHub Pages 的项目站点部署在 /<repo>/ 子路径下，base 必须匹配，
+          # 否则页面能开但静态资源 404。绑定自定义域名后改成 --base=/
+          pnpm build --base=/${{ github.event.repository.name }}/
+
+      - uses: actions/configure-pages@v5
+        with:
+          # 首次运行自动开启 Pages（否则要在仓库设置里手工把 Source 选成 GitHub Actions，
+          # 未开启时本步骤会以「Get Pages site failed / Not Found」失败，站点始终 404）
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .vitepress/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

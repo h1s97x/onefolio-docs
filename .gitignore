@@ -1,0 +1,7 @@
+# 文档站独立成仓后，本文件即为该仓的 .gitignore
+node_modules/
+.vitepress/cache/
+.vitepress/dist/
+
+# 本地手工导出的配置面工件（正式工件走 artifacts/config-surface.json 并入库）
+/config-surface.json

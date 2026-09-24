@@ -1,0 +1,18 @@
+{
+  "name": "onefolio-docs",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.0.0",
+  "description": "OneFolio 部署与运维文档站（VitePress，独立于应用构建）",
+  "scripts": {
+    "dev": "vitepress dev --port 5173",
+    "build": "vitepress build",
+    "preview": "vitepress preview --port 4173",
+    "check:config": "node scripts/check-config-coverage.mjs",
+    "check:config:surface": "node scripts/check-config-coverage.mjs --surface config-surface.json"
+  },
+  "devDependencies": {
+    "vitepress": "^1.6.4"
+  }
+}

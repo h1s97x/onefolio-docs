@@ -1,0 +1,33 @@
+# 文档站 CNB 仓库（内容源）的流水线配置
+#
+# ⚠️ 本文件在**源码仓里不生效**：CNB 只读仓库根目录的 .cnb.yml，而本文件在 docs-site/ 下。
+#    它属于文档仓 —— 推送文档站时会被放到该仓根目录并重命名为 .cnb.yml（见 docs-site/README.md）。
+#
+# 内容源与发布源分离是本方案的核心：
+#
+#   CNB 文档仓（本文件，内容源，私有）
+#        │  提交即单向同步
+#        ▼
+#   GitHub 文档仓（发布源，公开）
+#        │  .github/workflows/docs.yml：校验配置面 → 构建 → 发布 Pages
+#        ▼
+#   GitHub Pages
+#
+# 为什么不在 CNB 侧构建发布：站点发布在 GitHub Pages，让 GitHub Actions 基于
+# 「被发布的那份内容」构建，避免 CNB 构建产物与 GitHub 上的内容版本漂移。
+# 因此本仓 CI 只负责把内容同步过去，发布与校验都在 GitHub 侧做。
+
+main:
+  push:
+    - imports: https://cnb.cool/h1s97x/secret-env/-/blob/main/env.yml
+      name: sync to github
+      stages:
+        - name: sync to github
+          image: tencentcom/git-sync
+          settings:
+            # 发布源仓库（GitHub 上的文档仓，需已开启 Pages）
+            target_url: https://github.com/h1s97x/onefolio-docs.git
+            auth_type: https
+            username: ${GITHUB_USERNAME}
+            password: ${GITHUB_TOKEN}
+            branch: main

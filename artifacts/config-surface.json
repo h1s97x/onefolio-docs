@@ -1,0 +1,163 @@
+{
+  "schemaVersion": 1,
+  "product": "OneFolio",
+  "version": "bootstrap@25cd85d",
+  "commit": "25cd85d",
+  "generatedAt": "2026-09-24T01:24:07.851Z",
+  "sources": [
+    ".env.example",
+    "docker-compose.yml"
+  ],
+  "keys": [
+    {
+      "name": "AGENT_ALLOWED_DOMAINS",
+      "required": false,
+      "source": ".env.example"
+    },
+    {
+      "name": "AGENT_ALLOWED_EXTENSIONS",
+      "required": false,
+      "source": ".env.example"
+    },
+    {
+      "name": "AGENT_API_TOKEN",
+      "required": false,
+      "source": ".env.example"
+    },
+    {
+      "name": "AGENT_API_URL",
+      "required": false,
+      "source": ".env.example"
+    },
+    {
+      "name": "AGENT_EXTRA_HEADERS",
+      "required": false,
+      "source": ".env.example"
+    },
+    {
+      "name": "AGENT_PROJECT_ID",
+      "required": false,
+      "source": ".env.example"
+    },
+    {
+      "name": "AGENT_REQUEST_METHOD",
+      "required": false,
+      "source": ".env.example"
+    },
+    {
+      "name": "AGENT_TIMEOUT",
+      "required": false,
+      "source": ".env.example"
+    },
+    {
+      "name": "ALERT_EMAIL",
+      "required": false,
+      "source": ".env.example"
+    },
+    {
+      "name": "APP_PORT",
+      "required": false,
+      "source": "docker-compose.yml"
+    },
+    {
+      "name": "APP_URL",
+      "required": false,
+      "source": ".env.example"
+    },
+    {
+      "name": "AUTH_SECRET",
+      "required": true,
+      "source": ".env.example"
+    },
+    {
+      "name": "BOOTSTRAP_ADMIN_PASSWORD",
+      "required": true,
+      "source": "docker-compose.yml"
+    },
+    {
+      "name": "OAUTH2_AUTH_HOST",
+      "required": false,
+      "source": ".env.example"
+    },
+    {
+      "name": "OAUTH2_CLIENT_ID",
+      "required": false,
+      "source": ".env.example"
+    },
+    {
+      "name": "OAUTH2_CLIENT_SECRET",
+      "required": false,
+      "source": ".env.example"
+    },
+    {
+      "name": "OAUTH2_REDIRECT_URI",
+      "required": false,
+      "source": ".env.example"
+    },
+    {
+      "name": "ONEFOLIO_IMAGE",
+      "required": false,
+      "source": "docker-compose.yml"
+    },
+    {
+      "name": "PGRST_JWT_SECRET",
+      "required": true,
+      "source": "docker-compose.yml"
+    },
+    {
+      "name": "POSTGRES_DB",
+      "required": false,
+      "source": "docker-compose.yml"
+    },
+    {
+      "name": "POSTGRES_PASSWORD",
+      "required": true,
+      "source": "docker-compose.yml"
+    },
+    {
+      "name": "POSTGRES_USER",
+      "required": false,
+      "source": "docker-compose.yml"
+    },
+    {
+      "name": "SETTINGS_ENCRYPTION_KEY",
+      "required": false,
+      "source": ".env.example"
+    },
+    {
+      "name": "SMTP_FROM",
+      "required": false,
+      "source": ".env.example"
+    },
+    {
+      "name": "SMTP_HOST",
+      "required": false,
+      "source": ".env.example"
+    },
+    {
+      "name": "SMTP_PASS",
+      "required": false,
+      "source": ".env.example"
+    },
+    {
+      "name": "SMTP_PORT",
+      "required": false,
+      "source": ".env.example"
+    },
+    {
+      "name": "SMTP_USER",
+      "required": false,
+      "source": ".env.example"
+    },
+    {
+      "name": "SUPABASE_SERVICE_ROLE_KEY",
+      "required": true,
+      "source": ".env.example"
+    },
+    {
+      "name": "SUPABASE_URL",
+      "required": true,
+      "source": ".env.example"
+    }
+  ]
+}
