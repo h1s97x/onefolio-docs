@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "product": "OneFolio",
-  "version": "v0.3.4",
-  "commit": "6beaadbfc581a2a574923215af1c3869b8cc432b",
-  "generatedAt": "2026-10-20T04:54:27.296Z",
+  "version": "v0.3.5",
+  "commit": "c06e5b898012ccc08c01f1149becb19f37e9e8e2",
+  "generatedAt": "2026-10-20T10:44:48.872Z",
   "sources": [
     ".env.example",
     "docker-compose.yml"
@@ -66,6 +66,11 @@
     },
     {
       "name": "AUTH_SECRET",
+      "required": true,
+      "source": ".env.example"
+    },
+    {
+      "name": "AUTH_URL",
       "required": true,
       "source": ".env.example"
     },
